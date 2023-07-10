@@ -184,24 +184,28 @@ class SydneyAIClient {
         clientId
       } = createNewConversationResponse)
     }
+
+    let pm = []
     if (previousMessages.length > 0 && previousMessages[0].role === 'system') {
       previousMessages[0].role = 'bot'
-      previousMessages.splice(1, 0, {
+      pm.push(previousMessages.shift())
+      pm.push({
         role: 'bot',
         text: 'ok'
       })
     }
-    let pm = []
+    let tmpPm = []
     // 无限续杯
     let exceedConversations = []
     previousMessages.reverse().forEach(m => {
       if (pm.filter(m => m.author === 'user').length < global.maxNumUserMessagesInConversation - 1) {
-        pm.push(m)
+        tmpPm.push(m)
       } else {
         exceedConversations.push(m)
       }
     })
-    pm = pm.reverse()
+    tmpPm = tmpPm.reverse()
+    pm.push(...tmpPm)
 
     const userMessage = {
       id: crypto.randomUUID(),
@@ -444,6 +448,7 @@ class SydneyAIClient {
             if (difference) {
               onProgress(difference)
             }
+            console.log(replySoFar.join('\n'))
             return
           }
           case 2: {
