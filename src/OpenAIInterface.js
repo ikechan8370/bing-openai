@@ -4,8 +4,9 @@ async function chat(body, onData) {
     const {stream, messages} = body
     let client = new SydneyAIClient.SydneyAIClient()
     let onProgress
+    let partial
     if (stream) {
-        let partial = {
+        partial = {
             "id": "chatcmpl-" + generateRandomString(30),
             "object": "chat.completion",
             "created": Math.floor(Date.now() / 1000),
@@ -57,6 +58,19 @@ async function chat(body, onData) {
         try {
             let res = await client.sendMessage(prompt, messages, {onProgress})
             let text = res.response
+            if (stream) {
+                onData(Object.assign(partial, {
+                    choices: [
+                        {
+                            index: 0,
+                            delta: {
+                                content: "",
+                            },
+                            finish_reason: "stop"
+                        }
+                    ]
+                }))
+            }
             return {
                 "id": "chatcmpl-" + generateRandomString(30),
                 "object": "chat.completion",
