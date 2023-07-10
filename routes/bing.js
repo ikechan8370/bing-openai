@@ -8,6 +8,7 @@ router.post('/', async function(req, res, next) {
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('Access-Control-Allow-Origin', '*');
+  console.log(JSON.stringify(body))
   if (body.stream) {
     res.setHeader('Content-Type', 'text/event-stream');
     res.flushHeaders()

@@ -30,6 +30,7 @@ async function chat(body, onData) {
                 init = true
             }
             if (data) {
+                console.log(data)
                 onData(Object.assign(partial, {
                     choices: [
                         {

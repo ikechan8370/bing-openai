@@ -90,14 +90,14 @@ class SydneyAIClient {
 
       ws.on('open', () => {
         if (this.debug) {
-          console.debug('performing handshake')
+          console.log('performing handshake')
         }
         ws.send('{"protocol":"json","version":1}')
       })
 
       ws.on('close', () => {
         if (this.debug) {
-          console.debug('disconnected')
+          console.log('disconnected')
         }
       })
 
@@ -115,7 +115,7 @@ class SydneyAIClient {
         }
         if (typeof messages[0] === 'object' && Object.keys(messages[0]).length === 0) {
           if (this.debug) {
-            console.debug('handshake established')
+            console.log('handshake established')
           }
           // ping
           ws.bingPingInterval = setInterval(() => {
@@ -423,7 +423,8 @@ class SydneyAIClient {
               suggestedResponsesSoFar = message.suggestedResponses
             }
             const updatedText = messages[0].text
-            console.log(JSON.stringify(messages))
+            // console.log(JSON.stringify(messages))
+            // console.log(updatedText)
             if (!updatedText || updatedText === replySoFar[cursor]) {
               return
             }
