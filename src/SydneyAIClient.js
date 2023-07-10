@@ -429,8 +429,8 @@ class SydneyAIClient {
             }
             let difference
             // get the difference between the current text and the previous text
-            if (replySoFar[cursor] && updatedText.startsWith(replySoFar[cursor])) {
-              difference = updatedText.replace(replySoFar[cursor], '')
+            if (replySoFar[cursor] && updatedText.startsWith(replySoFar[cursor].trim())) {
+              difference = updatedText.replace(replySoFar[cursor].trim(), '')
               replySoFar[cursor] = updatedText
             } else if (replySoFar[cursor]) {
               cursor += 1
@@ -440,7 +440,9 @@ class SydneyAIClient {
               replySoFar[cursor] = updatedText
               difference = updatedText
             }
-            onProgress(difference)
+            if (difference) {
+              onProgress(difference)
+            }
             return
           }
           case 2: {
