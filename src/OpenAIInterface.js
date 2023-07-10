@@ -1,10 +1,47 @@
 const SydneyAIClient = require("./SydneyAIClient");
 
-async function chat (body) {
-    const { stream, messages } = body
+async function chat(body, onData) {
+    const {stream, messages} = body
     let client = new SydneyAIClient.SydneyAIClient()
-    const onProgress = () => {
-
+    let onProgress
+    if (stream) {
+        let partial = {
+            "id": "chatcmpl-" + generateRandomString(30),
+            "object": "chat.completion",
+            "created": Math.floor(Date.now() / 1000),
+            "model": "sydney-h3imaginative",
+        }
+        let init = false
+        onProgress = (data => {
+            if (!init) {
+                onData(Object.assign(partial, {
+                    choices: [
+                        {
+                            index: 0,
+                            delta: {
+                                content: "",
+                                role: "assistant"
+                            },
+                            finish_reason: null
+                        }
+                    ]
+                }))
+                init = true
+            }
+            if (data) {
+                onData(Object.assign(partial, {
+                    choices: [
+                        {
+                            index: 0,
+                            delta: {
+                                content: data,
+                            },
+                            finish_reason: null
+                        }
+                    ]
+                }))
+            }
+        })
     }
     messages.forEach(m => {
         if (m.role === 'assistant') {
@@ -18,7 +55,7 @@ async function chat (body) {
     let error
     while (retry >= 0) {
         try {
-            let res = await client.sendMessage(prompt, messages, onProgress)
+            let res = await client.sendMessage(prompt, messages, {onProgress})
             let text = res.response
             return {
                 "id": "chatcmpl-" + generateRandomString(30),

@@ -368,6 +368,7 @@ class SydneyAIClient {
             return object
           }
         }).filter(message => message)
+        // console.log(events)
         if (events.length === 0) {
           return
         }
@@ -395,6 +396,7 @@ class SydneyAIClient {
                   adaptiveCards: adaptiveCardsSoFar,
                   text: replySoFar.join('')
                 }
+
             if (messages[0].contentOrigin === 'Apology') {
               console.log('Apology found')
               if (!replySoFar[0]) {
@@ -424,17 +426,21 @@ class SydneyAIClient {
             if (!updatedText || updatedText === replySoFar[cursor]) {
               return
             }
+            let difference
             // get the difference between the current text and the previous text
             if (replySoFar[cursor] && updatedText.startsWith(replySoFar[cursor])) {
+              difference = updatedText.replace(replySoFar[cursor], '')
               replySoFar[cursor] = updatedText
             } else if (replySoFar[cursor]) {
               cursor += 1
+              difference = updatedText
               replySoFar.push(updatedText)
             } else {
               replySoFar[cursor] = replySoFar[cursor] + updatedText
+              difference = replySoFar[cursor]
             }
 
-            // onProgress(difference)
+            onProgress(difference)
             return
           }
           case 2: {

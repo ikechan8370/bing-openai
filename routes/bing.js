@@ -4,8 +4,26 @@ var router = express.Router();
 
 /* GET users listing. */
 router.post('/', async function(req, res, next) {
-  let result = await chat(req.body)
-  res.send(result);
+  let body = req.body
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (body.stream) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.flushHeaders()
+    const onData = (data) => {
+      // console.log(data)
+      res.write(`data: ${JSON.stringify(data)}\n\n`)
+    }
+    chat(body, onData).then(() => {
+      res.write(`data: [DONE]`)
+      res.end()
+    })
+  } else {
+    let result = await chat(body)
+    res.send(result);
+  }
+
 });
 
 module.exports = router;
