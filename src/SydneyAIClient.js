@@ -126,8 +126,8 @@ class SydneyAIClient {
           return
         }
         if (this.debug) {
-          console.debug(JSON.stringify(messages))
-          console.debug()
+          console.log(JSON.stringify(messages))
+          console.log()
         }
       })
     })
@@ -448,7 +448,7 @@ class SydneyAIClient {
             if (difference) {
               onProgress(difference)
             }
-            console.log(replySoFar.join('\n'))
+            // console.log(replySoFar.join('\n'))
             return
           }
           case 2: {

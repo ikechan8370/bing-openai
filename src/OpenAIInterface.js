@@ -2,7 +2,7 @@ const SydneyAIClient = require("./SydneyAIClient");
 
 async function chat(body, onData) {
     const {stream, messages} = body
-    let client = new SydneyAIClient.SydneyAIClient()
+    let client = new SydneyAIClient.SydneyAIClient({debug: true})
     let onProgress
     let partial
     if (stream) {
