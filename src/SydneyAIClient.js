@@ -437,7 +437,6 @@ class SydneyAIClient {
               replySoFar.push(updatedText)
             } else {
               replySoFar[cursor] = replySoFar[cursor] + updatedText
-              difference = replySoFar[cursor]
             }
 
             onProgress(difference)
