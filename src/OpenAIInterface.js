@@ -54,7 +54,8 @@ async function chat(body, onData) {
     let prompt = messages.pop().text
     let toneOption = 'h3imaginative'
     if (prompt.startsWith('Summarize a short and relevant title of input with')) {
-        toneOption = 'precise'
+        // toneOption = 'h3precise'
+        toneOption = 'sdgalileo'
     }
     let retry = 3
     let error
@@ -75,11 +76,14 @@ async function chat(body, onData) {
                     ]
                 }))
             }
+            if (prompt.startsWith('Summarize a short and relevant title of input with')) {
+                text = text.split('A possible title is:').pop().trim()
+            }
             return {
                 "id": "chatcmpl-" + generateRandomString(30),
                 "object": "chat.completion",
                 "created": Math.floor(Date.now() / 1000),
-                "model": "sydney-h3imaginative",
+                "model": "sydney-" + toneOption,
                 "choices": [
                     {
                         "index": 0,
