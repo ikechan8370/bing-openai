@@ -18,6 +18,11 @@ router.post('/', async function(req, res, next) {
     chat(body, onData).then(() => {
       res.write(`data: [DONE]`)
       res.end()
+    }).catch(err => {
+      res.write(JSON.stringify({
+        error: err
+      }))
+      res.end()
     })
   } else {
     let result = await chat(body)

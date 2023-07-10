@@ -423,6 +423,7 @@ class SydneyAIClient {
               suggestedResponsesSoFar = message.suggestedResponses
             }
             const updatedText = messages[0].text
+            console.log(JSON.stringify(messages))
             if (!updatedText || updatedText === replySoFar[cursor]) {
               return
             }
@@ -436,9 +437,9 @@ class SydneyAIClient {
               difference = updatedText
               replySoFar.push(updatedText)
             } else {
-              replySoFar[cursor] = replySoFar[cursor] + updatedText
+              replySoFar[cursor] = updatedText
+              difference = updatedText
             }
-
             onProgress(difference)
             return
           }
