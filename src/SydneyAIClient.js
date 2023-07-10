@@ -215,7 +215,7 @@ class SydneyAIClient {
     }
     const ws = await this.createWebSocketConnection()
     console.log('sydney websocket constructed successful')
-    const toneOption = 'h3imaginative'
+    const toneOption = this.opts.toneOption || 'h3imaginative'
     let optionsSets = [
       'nlu_direct_response_filter',
       'deepleo',

@@ -52,11 +52,15 @@ async function chat(body, onData) {
         delete m.content
     })
     let prompt = messages.pop().text
+    let toneOption = 'h3imaginative'
+    if (prompt.startsWith('Summarize a short and relevant title of input with')) {
+        toneOption = 'precise'
+    }
     let retry = 3
     let error
     while (retry >= 0) {
         try {
-            let res = await client.sendMessage(prompt, messages, {onProgress})
+            let res = await client.sendMessage(prompt, messages, {onProgress, toneOption})
             let text = res.response
             if (stream) {
                 onData(Object.assign(partial, {
