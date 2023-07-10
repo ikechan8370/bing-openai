@@ -153,7 +153,7 @@ class SydneyAIClient {
       onProgress,
       context,
       abortController = new AbortController(),
-      timeout = 20000,
+      timeout = 120000,
       firstMessageTimeout = 40000,
       messageType = 'Chat'
     } = opts
