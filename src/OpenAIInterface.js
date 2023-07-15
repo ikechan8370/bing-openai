@@ -44,7 +44,7 @@ async function chat(body, onData) {
                 } else if (isFunctionResponse) {
                    // do nothing
                 } else {
-                    if (data.trim().includes('Action:')) {
+                    if (!data.trim().includes('Action:')) {
                         onData(Object.assign(partial, {
                             choices: [
                                 {
