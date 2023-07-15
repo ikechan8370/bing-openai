@@ -38,13 +38,13 @@ async function chat(body, onData) {
                 init = true
             }
             if (data) {
-                if (function_call || dataSoFar.trimEnd().endsWith("Action:")) {
+                if (function_call || dataSoFar.trimEnd().includes("Action:")) {
                     // stop stream to do function call
                     function_call = true
                 } else if (isFunctionResponse) {
                    // do nothing
                 } else {
-                    if (data.trim() !== 'Action' && data.trim() !== 'Action:') {
+                    if (data.trim().includes('Action:')) {
                         onData(Object.assign(partial, {
                             choices: [
                                 {
