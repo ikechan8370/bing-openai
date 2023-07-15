@@ -69,7 +69,7 @@ async function chat(body, onData) {
         m.text = m.content
         if (m.function_call) {
             m.text +=  '\nAction: ' + m.function_call.name + '\n' +
-               'Action Input:' + m.function_call.name.arguments + '\n' +
+               'Action Input:' + m.function_call.arguments + '\n' +
                 'Observation: 等待结果\n' +
                 'Thought: 我现在不知道最终答案\n'
             m.text = m.text.trim()

@@ -631,7 +631,7 @@ function functionPrompt(functions = []) {
       let parameter = func.parameters.properties[p]
       prompt += `${p}${requiredMap[p] ? ' (required)' : ''}: ${parameter.type}, ${parameter.description}; `
     })
-    prompt += '\n\n'
+    prompt += '\n'
   })
   // prompt += '\nAttention: if I decide to call one function, I will reply the function_call object string in json format followed with \'function_call\' without any other characters, the format would be like this example:\n' +
   //     'function_call\n' +
