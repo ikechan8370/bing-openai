@@ -155,7 +155,9 @@ class SydneyAIClient {
       abortController = new AbortController(),
       timeout = 120000,
       firstMessageTimeout = 40000,
-      messageType = 'Chat'
+      messageType = 'Chat',
+      functions = [],
+      toneOption
     } = opts
     // if (messageType === 'Chat') {
     //   console.warn('该Bing账户token已被限流，降级至使用非搜索模式。本次对话AI将无法使用Bing搜索返回的内容')
@@ -193,6 +195,19 @@ class SydneyAIClient {
         role: 'bot',
         text: 'ok'
       })
+      if (functions.length > 0) {
+        pm[0].text =  functionPrompt(functions) + '\n' + pm[0].text
+      }
+    }
+    if (pm.length === 0 && functions.length > 0) {
+      pm.push({
+        role: 'bot',
+        text: functionPrompt(functions)
+      })
+      pm.push({
+        role: 'bot',
+        text: 'ok'
+      })
     }
     let tmpPm = []
     // 无限续杯
@@ -215,7 +230,7 @@ class SydneyAIClient {
     }
     const ws = await this.createWebSocketConnection()
     console.log('sydney websocket constructed successful')
-    const toneOption = this.opts.toneOption || 'h3imaginative'
+    toneOption = toneOption || 'h3imaginative'
     let optionsSets = [
       'nlu_direct_response_filter',
       'deepleo',
@@ -223,6 +238,8 @@ class SydneyAIClient {
       'responsible_ai_policy_235',
       'enablemm',
       toneOption,
+        // "saharagenconv5",
+        // "clgalileo",
       'dagslnv1',
       'sportsansgnd',
       'dl_edge_desc',
@@ -281,7 +298,8 @@ class SydneyAIClient {
             timestamp: currentDate
             // messageType: 'SearchQuery'
           },
-          tone: 'Creative',
+          // tone: 'Creative',
+          // "tone":"Precise",
           conversationSignature,
           participant: {
             id: clientId
@@ -600,6 +618,36 @@ async function generateRandomIP () {
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function functionPrompt(functions = []) {
+  let prompt = `I will answer the following questions as best you can. I have access to the following tools, I'll not search about these tools, I can choose one even if I know I cannot execute it:':\n`
+  functions.forEach(func => {
+    let properties = Object.keys(func.parameters.properties);
+    let requiredMap = {};
+    (func?.parameters?.required || []).forEach(r => requiredMap[r] = true);
+    prompt += `${func.name}: ${func.description}. The arguments of this tool are: `;
+    properties.forEach(p => {
+      let parameter = func.parameters.properties[p]
+      prompt += `${p}${requiredMap[p] ? ' (required)' : ''}: ${parameter.type}, ${parameter.description}; `
+    })
+    prompt += '\n\n'
+  })
+  // prompt += '\nAttention: if I decide to call one function, I will reply the function_call object string in json format followed with \'function_call\' without any other characters, the format would be like this example:\n' +
+  //     'function_call\n' +
+  //     'function_name\n' +
+  //     'arguments: "{\\n  \\"argument1\\": \\"value1\\",\\n  \\"argument2\\": \\"value2\\"\\n}"\n'
+
+  prompt += `I will use the following format to answer the question:
+  Action: the action to take, should be one of [${functions.map(f => f.name)}]
+  Action Input: the input to the action, should be a JSON string format
+  Observation: the result of the action, I maybe should wait for the next turn to get the result. I shouldn't fill it in your answer by yourself, only the user can give me the result
+  ... (this Thought/Action/Action Input/Observation can repeat N times)
+  Thought: I now know the final answer
+  Final Answer: the final answer to the original input question, if the tools doesn't return yet, I don't know the final answer so my answer mustn't contain this part`
+
+  console.log(prompt)
+  return prompt
 }
 
 module.exports = {
