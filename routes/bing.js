@@ -17,7 +17,7 @@ router.post('/', async function(req, res, next) {
       res.write(`data: ${JSON.stringify(data)}\n\n`)
     }
     chat(body, onData).then(() => {
-      res.write(`[DONE]`)
+      res.write(`data: [DONE]\n\n`)
       res.end()
     }).catch(err => {
       res.write(JSON.stringify({
