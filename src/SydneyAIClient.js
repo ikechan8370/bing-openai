@@ -20,7 +20,7 @@ class SydneyAIClient {
   constructor (opts = {}) {
     this.opts = {
       ...opts,
-      host: 'https://bing.roki.best'
+      host: 'https://bing.d201.co'
     }
     this.debug = opts.debug
   }
@@ -53,36 +53,44 @@ class SydneyAIClient {
       }
     }
     console.log('使用host：' + this.opts.host)
-    let response = await fetch(`${this.opts.host}/turing/conversation/create`, fetchOptions)
+    let response = await fetch(`${this.opts.host}/turing/conversation/create?bundleVersion=1.1381.12`, fetchOptions)
     let text = await response.text()
     let retry = 10
     while (retry >= 0 && response.status === 200 && !text) {
-      await delay(400)
-      response = await fetch(`${this.opts.host}/turing/conversation/create`, fetchOptions)
+      await common.sleep(400)
+      response = await fetch(`${this.opts.host}/turing/conversation/create?bundleVersion=1.1381.12`, fetchOptions)
       text = await response.text()
       retry--
     }
     if (response.status !== 200) {
-      console.error('创建sydney对话失败: status code: ' + response.status + response.statusText)
-      console.error('response body：' + text)
+      logger.error('创建sydney对话失败: status code: ' + response.status + response.statusText)
+      logger.error('response body：' + text)
       throw new Error('创建sydney对话失败: status code: ' + response.status + response.statusText)
     }
     try {
-      return JSON.parse(text)
+      let r = JSON.parse(text)
+      if (!r.conversationSignature) {
+        r.encryptedconversationsignature = response.headers.get('x-sydney-encryptedconversationsignature')
+      }
+      return r
     } catch (err) {
-      console.error('创建sydney对话失败: status code: ' + response.status + response.statusText)
-      console.error(text)
+      logger.error('创建sydney对话失败: status code: ' + response.status + response.statusText)
+      logger.error(text)
       throw new Error(text)
     }
   }
 
-  async createWebSocketConnection () {
+  async createWebSocketConnection (encryptedconversationsignature = '') {
     return new Promise((resolve, reject) => {
       let agent
       let sydneyHost = this.opts.host.replace('https://', 'wss://').replace('http://', 'ws://')
 
       console.log(`use sydney websocket host: ${sydneyHost}`)
-      let ws = new WebSocket(sydneyHost + '/sydney/ChatHub', undefined, { agent, origin: 'https://edgeservices.bing.com' })
+      let host = sydneyHost + '/sydney/ChatHub'
+      if (encryptedconversationsignature) {
+        host += `?sec_access_token=${encodeURIComponent(encryptedconversationsignature)}`
+      }
+      let ws = new WebSocket(host, undefined, { agent, origin: 'https://edgeservices.bing.com' })
       ws.on('error', (err) => {
         console.error(err)
         reject(err)
@@ -162,10 +170,11 @@ class SydneyAIClient {
     // if (messageType === 'Chat') {
     //   console.warn('该Bing账户token已被限流，降级至使用非搜索模式。本次对话AI将无法使用Bing搜索返回的内容')
     // }
+    let encryptedconversationsignature = ''
     if (typeof onProgress !== 'function') {
       onProgress = () => {}
     }
-    if (parentMessageId || !conversationSignature || !conversationId || !clientId) {
+    if (!conversationSignature || !conversationId || !clientId) {
       const createNewConversationResponse = await this.createNewConversation()
       if (this.debug) {
         console.debug(createNewConversationResponse)
@@ -173,7 +182,7 @@ class SydneyAIClient {
       if (createNewConversationResponse.result?.value === 'UnauthorizedRequest') {
         throw new Error(`UnauthorizedRequest: ${createNewConversationResponse.result.message}`)
       }
-      if (!createNewConversationResponse.conversationSignature || !createNewConversationResponse.conversationId || !createNewConversationResponse.clientId) {
+      if (!createNewConversationResponse.conversationId || !createNewConversationResponse.clientId) {
         const resultValue = createNewConversationResponse.result?.value
         if (resultValue) {
           throw new Error(`${resultValue}: ${createNewConversationResponse.result.message}`)
@@ -183,7 +192,8 @@ class SydneyAIClient {
       ({
         conversationSignature,
         conversationId,
-        clientId
+        clientId,
+        encryptedconversationsignature
       } = createNewConversationResponse)
     }
 
@@ -228,7 +238,7 @@ class SydneyAIClient {
       role: 'User',
       message
     }
-    const ws = await this.createWebSocketConnection()
+    const ws = await this.createWebSocketConnection(encryptedconversationsignature)
     console.log('sydney websocket constructed successful')
     toneOption = toneOption || 'h3imaginative'
     let optionsSets = [
@@ -238,76 +248,127 @@ class SydneyAIClient {
       'responsible_ai_policy_235',
       'enablemm',
       toneOption,
-        // "saharagenconv5",
-        // "clgalileo",
-      'dagslnv1',
-      'sportsansgnd',
-      'dl_edge_desc',
-      'noknowimg',
+      // 'dagslnv1',
+      // 'sportsansgnd',
+      // 'dl_edge_desc',
+      // 'noknowimg',
       // 'dtappid',
       // 'cricinfo',
       // 'cricinfov2',
       'dv3sugg',
-      'gencontentv3'
+      // 'gencontentv3',
+      'iycapbing',
+      'iyxapbing',
+      // 'revimglnk',
+      // 'revimgsrc1',
+      // 'revimgur',
+      'clgalileo',
+      'eredirecturl'
     ]
 
     const currentDate = moment().format('YYYY-MM-DDTHH:mm:ssZ')
 
+    let argument0 = {
+      source: 'cib',
+      optionsSets,
+      allowedMessageTypes: ['ActionRequest', 'Chat', 'Context',
+        // 'InternalSearchQuery', 'InternalSearchResult', 'Disengaged', 'InternalLoaderMessage', 'Progress', 'RenderCardRequest', 'AdsQuery',
+        'InvokeAction', 'SemanticSerp', 'GenerateContentQuery', 'SearchQuery'],
+      sliceIds: [
+        // 'e2eperf',
+        // 'gbacf',
+        // 'srchqryfix',
+        // 'caccnctacf',
+        // 'translref',
+        // 'fluxnosearchc',
+        // 'fluxnosearch',
+        // '1115rai289s0',
+        // '1130deucs0',
+        // '1116pythons0',
+        // 'cacmuidarb'
+      ],
+      requestId: crypto.randomUUID(),
+      traceId: genRanHex(32),
+      scenario: 'SERP',
+      verbosity: 'verbose',
+      conversationHistoryOptionsSets: [
+        'autosave',
+        'savemem',
+        'uprofupd',
+        'uprofgen'
+      ],
+      isStartOfSession: invocationId === 0,
+      message: {
+        locale: 'zh-CN',
+        market: 'zh-CN',
+        region: 'JP',
+        location: 'lat:47.639557;long:-122.128159;re=1000m;',
+        locationHints: [
+          {
+            SourceType: 1,
+            RegionType: 2,
+            Center: {
+              Latitude: 35.808799743652344,
+              Longitude: 139.08140563964844
+            },
+            Radius: 24902,
+            Name: 'Japan',
+            Accuracy: 24902,
+            FDConfidence: 0,
+            CountryName: 'Japan',
+            CountryConfidence: 9,
+            PopulatedPlaceConfidence: 0,
+            UtcOffset: 9,
+            Dma: 0
+          },
+          {
+            SourceType: 11,
+            RegionType: 1,
+            Center: {
+              Latitude: 39.914398193359375,
+              Longitude: 116.37020111083984
+            },
+            Accuracy: 37226,
+            Timestamp: {
+              utcTime: 133461395300000000,
+              utcOffset: 0
+            },
+            FDConfidence: 1,
+            PreferredByUser: false,
+            LocationProvider: 'I'
+          }
+        ],
+        author: 'user',
+        inputMethod: 'Keyboard',
+        text: message,
+        messageType,
+        userIpAddress: await generateRandomIP(),
+        timestamp: currentDate,
+        privacy: 'Internal'
+        // messageType: 'SearchQuery'
+      },
+      tone: 'Creative',
+      // privacy: 'Internal',
+      conversationSignature,
+      participant: {
+        id: clientId
+      },
+      spokenTextMode: 'None',
+      conversationId,
+      previousMessages,
+      plugins: [
+        // {
+        //   id: 'c310c353-b9f0-4d76-ab0d-1dd5e979cf68'
+        // }
+      ]
+    }
+
+    if (encryptedconversationsignature) {
+      delete argument0.conversationSignature
+    }
     const obj = {
       arguments: [
-        {
-          source: 'cib',
-          optionsSets,
-          allowedMessageTypes: ['ActionRequest', 'Chat', 'Context',
-            // 'InternalSearchQuery', 'InternalSearchResult', 'Disengaged', 'InternalLoaderMessage', 'Progress', 'RenderCardRequest', 'AdsQuery',
-            'SemanticSerp', 'GenerateContentQuery', 'SearchQuery'],
-          sliceIds: [],
-          traceId: genRanHex(32),
-          isStartOfSession: invocationId === 0,
-          message: {
-            locale: 'zh-CN',
-            market: 'zh-CN',
-            region: 'HK',
-            location: 'lat:47.639557;long:-122.128159;re=1000m;',
-            locationHints: [
-              {
-                Center: {
-                  Latitude: 39.971031896331,
-                  Longitude: 116.33522679576237
-                },
-                RegionType: 2,
-                SourceType: 11
-              },
-              {
-                country: 'Hong Kong',
-                timezoneoffset: 8,
-                countryConfidence: 9,
-                Center: {
-                  Latitude: 22.15,
-                  Longitude: 114.1
-                },
-                RegionType: 2,
-                SourceType: 1
-              }
-            ],
-            author: 'user',
-            inputMethod: 'Keyboard',
-            text: message,
-            messageType,
-            userIpAddress: await generateRandomIP(),
-            timestamp: currentDate
-            // messageType: 'SearchQuery'
-          },
-          // tone: 'Creative',
-          // "tone":"Precise",
-          conversationSignature,
-          participant: {
-            id: clientId
-          },
-          spokenTextMode: 'None',
-          conversationId,
-          previousMessages: pm
-        }
+        argument0
       ],
       invocationId: invocationId.toString(),
       target: 'chat',
